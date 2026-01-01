@@ -79,8 +79,40 @@ export async function POST(req: NextRequest) {
             }
 
         } else {
-            // Logic Texte Standard
-            twiml.message(`👋 Marhba ! J'ai bien reçu : "${body}".\n\nEnvoyez-moi une photo de facture ou une note vocale pour tester l'IA.`);
+            // Logic Texte (Traité comme une commande vocale)
+            try {
+                const { interpretVoiceCommand } = await import('@/services/ai-processing');
+                const { supabaseAdmin } = await import('@/lib/supabase');
+
+                // Utilisation directe du texte reçu
+                const command = await interpretVoiceCommand(body);
+                console.log(`[Neemo] Text Intent: ${command.intent}, Value: ${command.value}`);
+
+                if (command.intent === 'UPDATE_STATUS') {
+                    const { error } = await supabaseAdmin
+                        .from('shops')
+                        .update({ status: command.value })
+                        .eq('phone', from);
+
+                    if (error) throw new Error(`DB Error: ${error.message}`);
+                    twiml.message(`✅ ${command.reply}`);
+
+                } else if (command.intent === 'UPDATE_HOURS') {
+                    const { error } = await supabaseAdmin
+                        .from('shops')
+                        .update({ hours: command.value })
+                        .eq('phone', from);
+
+                    if (error) throw new Error(`DB Error: ${error.message}`);
+                    twiml.message(`🕒 ${command.reply}`);
+                } else {
+                    // Si l'IA ne comprend pas (intent 'OTHER'), on garde le message d'accueil
+                    twiml.message(`👋 Marhba ! J'ai bien reçu : "${body}".\n\n(Envoyez une commande claire comme "Ferme le magasin" ou une photo de facture)`);
+                }
+            } catch (e) {
+                console.error(e);
+                twiml.message("⚠️ Je n'arrive pas à comprendre ce message.");
+            }
         }
 
         // 3. Retour de la réponse XML
@@ -89,7 +121,6 @@ export async function POST(req: NextRequest) {
                 'Content-Type': 'text/xml',
             },
         });
-
     } catch (error) {
         console.error('[Neemo] Error processing webhook:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
