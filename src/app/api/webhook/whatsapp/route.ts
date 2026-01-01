@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
                             .from('merchant_sessions')
                             .select('active_shop_slug')
                             .eq('phone', from)
-                            .single();
+                            .maybeSingle();
 
                         if (session?.active_shop_slug) {
                             targetSlug = session.active_shop_slug;
@@ -165,7 +165,7 @@ export async function POST(req: NextRequest) {
                         .from('merchant_sessions')
                         .select('active_shop_slug')
                         .eq('phone', from)
-                        .single();
+                        .maybeSingle();
 
                     const messageText = body.toLowerCase().trim();
 
