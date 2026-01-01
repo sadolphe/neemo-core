@@ -9,7 +9,8 @@ const authToken = process.env.TWILIO_AUTH_TOKEN;
 const twilioNumber = process.env.TWILIO_WHATSAPP_NUMBER;
 
 export async function GET() {
-    return new Response(`Neemo Webhook is ACTIVE.
+    // Unique ID: 1735773900 (Force Update)
+    return new Response(`Neemo Webhook is ACTIVE. [Diagnostic v3]
 Account SID: ${accountSid ? '✅ Set' : '❌ Missing'}
 Auth Token: ${authToken ? '✅ Set' : '❌ Missing'}
 WhatsApp Number: ${twilioNumber || '❌ Missing'}`, {
