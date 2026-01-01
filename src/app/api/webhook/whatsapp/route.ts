@@ -49,24 +49,36 @@ export async function POST(req: NextRequest) {
                     console.log(`[Neemo] Intent: ${command.intent}, Value: ${command.value}`);
 
                     if (command.intent === 'UPDATE_STATUS') {
-                        // DB Update using whatsapp number as identifier
-                        // 'From' format is "whatsapp:+212..."
-                        const { error } = await supabaseAdmin
+                        const { data, error } = await supabaseAdmin
                             .from('shops')
-                            .update({ status: command.value, hours: command.value === 'closed' ? 'Fermé' : undefined }) // Example logic
-                            .eq('phone', from);
+                            .update({ status: command.value, hours: command.value === 'closed' ? 'Fermé' : undefined })
+                            .eq('phone', from)
+                            .select(); // Important to get returned rows
 
                         if (error) throw new Error(`DB Error: ${error.message}`);
-                        twiml.message(`✅ ${command.reply}`);
+
+                        const count = data?.length || 0;
+                        if (count === 0) {
+                            twiml.message(`⚠️ Bizarre... Je n'ai trouvé aucun magasin avec le numéro ${from} dans la base.\nVérifiez le numéro dans Supabase.`);
+                        } else {
+                            twiml.message(`✅ ${command.reply}\n(Modifié ${count} magasin(s) pour ${from})`);
+                        }
 
                     } else if (command.intent === 'UPDATE_HOURS') {
-                        const { error } = await supabaseAdmin
+                        const { data, error } = await supabaseAdmin
                             .from('shops')
                             .update({ hours: command.value })
-                            .eq('phone', from);
+                            .eq('phone', from)
+                            .select();
 
                         if (error) throw new Error(`DB Error: ${error.message}`);
-                        twiml.message(`🕒 ${command.reply}`);
+
+                        const count = data?.length || 0;
+                        if (count === 0) {
+                            twiml.message(`⚠️ Bizarre... Je n'ai trouvé aucun magasin avec le numéro ${from} dans la base.\nVérifiez le numéro dans Supabase.`);
+                        } else {
+                            twiml.message(`🕒 ${command.reply}\n(Modifié ${count} magasin(s))`);
+                        }
                     } else {
                         // Fallback (Simple écho)
                         twiml.message(`🎙️ J'ai entendu : "${text}"`);
