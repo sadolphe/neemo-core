@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
                 // Flux Oreille (Whisper + Intent)
                 try {
                     const { transcribeAudio, interpretVoiceCommand } = await import('@/services/ai-processing');
+                    const { supabaseAdmin } = await import('@/lib/supabase');
 
                     // 1. Transcription (Audio -> Texte)
                     const text = await transcribeAudio(mediaUrl);
@@ -48,11 +49,24 @@ export async function POST(req: NextRequest) {
                     console.log(`[Neemo] Intent: ${command.intent}, Value: ${command.value}`);
 
                     if (command.intent === 'UPDATE_STATUS') {
-                        // Simulation DB Update
-                        twiml.message(`✅ ${command.reply}\n(Status changé pour: ${command.value})`);
+                        // DB Update using whatsapp number as identifier
+                        // 'From' format is "whatsapp:+212..."
+                        const { error } = await supabaseAdmin
+                            .from('shops')
+                            .update({ status: command.value, hours: command.value === 'closed' ? 'Fermé' : undefined }) // Example logic
+                            .eq('phone', from);
+
+                        if (error) throw new Error(`DB Error: ${error.message}`);
+                        twiml.message(`✅ ${command.reply}`);
+
                     } else if (command.intent === 'UPDATE_HOURS') {
-                        // Simulation DB Update
-                        twiml.message(`🕒 ${command.reply}\n(Nouveaux horaires: ${command.value})`);
+                        const { error } = await supabaseAdmin
+                            .from('shops')
+                            .update({ hours: command.value })
+                            .eq('phone', from);
+
+                        if (error) throw new Error(`DB Error: ${error.message}`);
+                        twiml.message(`🕒 ${command.reply}`);
                     } else {
                         // Fallback (Simple écho)
                         twiml.message(`🎙️ J'ai entendu : "${text}"`);

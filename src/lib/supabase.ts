@@ -7,8 +7,14 @@ if (!supabaseUrl || !supabaseKey) {
     console.warn('[Neemo] Supabase credentials missing. Database features will fail.');
 }
 
-// Client Admin pour le Bot (backend side)
+// Client Admin pour le Bot (backend side - écriture/lecture totale)
 export const supabaseAdmin = createClient(
     supabaseUrl || 'https://dummy.supabase.co',
     supabaseKey || 'dummy-key'
+);
+
+// Client Public pour le Frontend (lecture seule via RLS)
+export const supabase = createClient(
+    supabaseUrl || 'https://dummy.supabase.co',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy-key'
 );

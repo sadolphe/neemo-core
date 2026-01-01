@@ -9,37 +9,10 @@ export async function generateStaticParams() {
 
 // Mock Data pour le prototype
 // En production, ça viendra de Supabase : await supabase.from('shops').select('*').eq('slug', params.slug)
-// Mock Data pour le prototype
-// En production, ça viendra de Supabase : await supabase.from('shops').select('*').eq('slug', params.slug)
-const MOCK_SHOPS: Record<string, any> = {
-    'epicerie-atlas': {
-        name: "Épicerie Atlas - Chez Brahim",
-        category: "Alimentation Générale",
-        phone: "212600000000",
-        coverColor: "from-blue-600 to-cyan-400",
-        address: "12 Rue des Oliviers, Maarif, Casablanca",
-        status: "open",
-        hours: "08:00 - 23:00",
-        description: "Votre épicerie de quartier préférée. Produits frais, recharge, et sourire compris.",
-        products: [
-            { name: "Sidi Ali 1.5L", price: "6.00", image: "💧" },
-            { name: "Centrale Lait ½L", price: "3.50", image: "🥛" },
-            { name: "Coca Cola 1L", price: "8.00", image: "🥤" },
-            { name: "Pain Rond", price: "1.20", image: "🥖" },
-        ]
-    },
-    'boucherie-centrale': {
-        name: "Boucherie Centrale",
-        category: "Viande & Volailles",
-        phone: "212611111111",
-        coverColor: "from-red-600 to-rose-400",
-        address: "45 Bd d'Anfa, Casablanca",
-        status: "closed",
-        hours: "09:00 - 20:00",
-        description: "Viande locale de qualité. Kefta préparée sur place.",
-        products: []
-    }
-};
+import { supabase } from '@/lib/supabase';
+
+// Mock Data pour le prototype (Removed) replaced by Supabase
+// ...
 
 type Props = {
     params: Promise<{ slug: string }>;
@@ -48,12 +21,22 @@ type Props = {
 
 export default async function ShopPage(props: Props) {
     const params = await props.params;
-    const slug = params.slug;
-    const shop = MOCK_SHOPS[slug];
+    const { slug } = params;
 
-    if (!shop) {
+    // Fetch shop data from Supabase
+    const { data: shop, error } = await supabase
+        .from('shops')
+        .select('*')
+        .eq('slug', slug)
+        .single();
+
+    if (error || !shop) {
+        console.error('[Neemo] Shop Not Found:', error);
         return notFound();
     }
+
+    // Sécurité: Si le magasin est fermé, on le montre quand même mais avec un overlay (à faire plus tard)
+    // Pour l'instant on affiche juste le status.
 
     const whatsappLink = `https://wa.me/${shop.phone}?text=Bonjour ${shop.name}, je voudrais commander...`;
 
