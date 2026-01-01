@@ -1,112 +1,65 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import twilio from 'twilio';
 
 const { MessagingResponse } = twilio.twiml;
 
+// Diagnostic API Configuration
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const twilioNumber = process.env.TWILIO_WHATSAPP_NUMBER;
+
 export async function GET() {
-    return new Response("Neemo Webhook is ACTIVE. Use POST for WhatsApp.", {
+    return new Response(`Neemo Webhook is ACTIVE.
+Account SID: ${accountSid ? '✅ Set' : '❌ Missing'}
+Auth Token: ${authToken ? '✅ Set' : '❌ Missing'}
+WhatsApp Number: ${twilioNumber || '❌ Missing'}`, {
         status: 200,
         headers: { 'Content-Type': 'text/plain' }
     });
 }
 
 export async function POST(req: NextRequest) {
-    const twiml = new MessagingResponse();
+    console.log("[Neemo] Webhook POST call");
 
     try {
-        // 1. Parsing standard (Le plus fiable pour Twilio)
-        const formData = await req.formData();
-        const body = (formData.get('Body') as string) || '';
-        const from = (formData.get('From') as string) || '';
-        const numMedia = parseInt(formData.get('NumMedia') as string || '0');
+        const text = await req.text();
+        const params = new URLSearchParams(text);
+        const from = params.get('From') || '';
+        const body = params.get('Body') || '';
 
-        console.log(`[Neemo] POST: ${from} -> "${body}"`);
+        console.log(`[Neemo] From: ${from}, Body: ${body}`);
 
-        // 2. Pong immédiat
-        if (body.toLowerCase().trim() === 'ping') {
-            twiml.message("🏓 Pong ! Neemo est en ligne et reçoit vos messages.");
-            return new Response(twiml.toString(), { headers: { 'Content-Type': 'text/xml' } });
-        }
+        // TEST 1: TwiML (Réponse classique)
+        const twiml = new MessagingResponse();
+        twiml.message(`🤖 [TwiML] J'ai bien reçu : "${body}"`);
 
-        // 3. Imports à la demande
-        const { supabaseAdmin } = await import('@/lib/supabase');
-        const { transcribeAudio, interpretVoiceCommand, analyzeInvoiceImage } = await import('@/services/ai-processing');
-
-        // Logic Boutique
-        const { data: shops } = await supabaseAdmin.from('shops').select('slug, name').eq('phone', from);
-        const userShops = shops || [];
-
-        if (userShops.length === 0) {
-            twiml.message(`⚠️ Aucun magasin trouvé pour ce numéro.`);
-            return new Response(twiml.toString(), { headers: { 'Content-Type': 'text/xml' } });
-        }
-
-        // Gestion Multi-Shop
-        let targetSlug = userShops[0].slug;
-        let multi = userShops.length > 1;
-
-        if (multi) {
-            const { data: sess } = await supabaseAdmin.from('merchant_sessions').select('active_shop_slug').eq('phone', from).maybeSingle();
-            const lowBody = body.toLowerCase().trim();
-
-            if (lowBody === 'menu' || lowBody === 'changer') {
-                await supabaseAdmin.from('merchant_sessions').delete().eq('phone', from);
-                let msg = "🏪 *Vos Boutiques* :\n\n";
-                userShops.forEach((s, i) => msg += `${i + 1}. ${s.name}\n`);
-                msg += "\nRépondez par le chiffre pour choisir.";
-                twiml.message(msg);
-                return new Response(twiml.toString(), { headers: { 'Content-Type': 'text/xml' } });
+        // TEST 2: Direct Send via API (Si configuré)
+        if (accountSid && authToken && twilioNumber) {
+            try {
+                const client = twilio(accountSid, authToken);
+                await client.messages.create({
+                    from: twilioNumber,
+                    to: from,
+                    body: `🚀 [Direct API] Confirmation de réception pour : "${body}"`
+                });
+                console.log("[Neemo] Direct API message sent successfully");
+            } catch (err: any) {
+                console.error("[Neemo] Direct API error:", err.message);
+                // On ajoute l'erreur au TwiML pour que l'utilisateur la voie
+                twiml.message(`❌ Erreur API Directe: ${err.message}`);
             }
-
-            if (!sess?.active_shop_slug) {
-                const idx = parseInt(lowBody) - 1;
-                if (!isNaN(idx) && userShops[idx]) {
-                    await supabaseAdmin.from('merchant_sessions').upsert({ phone: from, active_shop_slug: userShops[idx].slug, last_interaction: new Date().toISOString() });
-                    twiml.message(`✅ Session : *${userShops[idx].name}*.\nQue voulez-vous faire ?`);
-                    return new Response(twiml.toString(), { headers: { 'Content-Type': 'text/xml' } });
-                } else {
-                    let msg = "🏪 *Choisissez une boutique* :\n\n";
-                    userShops.forEach((s, i) => msg += `${i + 1}. ${s.name}\n`);
-                    twiml.message(msg);
-                    return new Response(twiml.toString(), { headers: { 'Content-Type': 'text/xml' } });
-                }
-            }
-            targetSlug = sess.active_shop_slug;
         }
 
-        // Exécution commande
-        if (numMedia > 0) {
-            const mediaUrl = formData.get('MediaUrl0') as string;
-            const mediaType = formData.get('MediaContentType0') as string;
+        return new Response(twiml.toString(), {
+            status: 200,
+            headers: { 'Content-Type': 'text/xml' }
+        });
 
-            if (mediaType.startsWith('image/')) {
-                const dataArr = await analyzeInvoiceImage(mediaUrl);
-                twiml.message(`🧾 Facture: ${dataArr.fournisseur || 'Inconnu'} (${dataArr.montant_total || '?'} DH)`);
-            } else if (mediaType.startsWith('audio/')) {
-                const text = await transcribeAudio(mediaUrl);
-                const cmd = await interpretVoiceCommand(text);
-                await executeUpdates(supabaseAdmin, targetSlug, cmd, twiml);
-            }
-        } else {
-            const cmd = await interpretVoiceCommand(body);
-            await executeUpdates(supabaseAdmin, targetSlug, cmd, twiml);
-        }
-
-        return new Response(twiml.toString(), { headers: { 'Content-Type': 'text/xml' } });
-
-    } catch (e) {
-        console.error('[Neemo] Error:', e);
-        const err = new MessagingResponse();
-        err.message("❌ Un souci technique. Réessayez plus tard.");
-        return new Response(err.toString(), { headers: { 'Content-Type': 'text/xml' } });
+    } catch (e: any) {
+        console.error("[Neemo] Webhook Critical Error:", e.message);
+        return new Response(`<Response><Message>❌ Erreur Critique: ${e.message}</Message></Response>`, {
+            status: 500,
+            headers: { 'Content-Type': 'text/xml' }
+        });
     }
-}
-
-async function executeUpdates(supabase: any, slug: string, cmd: any, twiml: any) {
-    if (cmd.intent === 'UPDATE_STATUS') {
-        await supabase.from('shops').update({ status: cmd.value, updated_at: new Date().toISOString() }).eq('slug', slug);
-    } else if (cmd.intent === 'UPDATE_HOURS') {
-        await supabase.from('shops').update({ hours: cmd.value, updated_at: new Date().toISOString() }).eq('slug', slug);
-    }
-    twiml.message(cmd.reply || `🤖 Message reçu.`);
 }
