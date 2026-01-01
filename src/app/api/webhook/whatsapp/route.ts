@@ -48,11 +48,52 @@ export async function POST(req: NextRequest) {
                     const command = await interpretVoiceCommand(text);
                     console.log(`[Neemo] Intent: ${command.intent}, Value: ${command.value}`);
 
+                    // --- LOGIQUE MULTI-BOUTIQUES (identique au texte) ---
+
+                    const { data: shops } = await supabaseAdmin
+                        .from('shops')
+                        .select('slug, name')
+                        .eq('phone', from);
+
+                    const userShops = shops || [];
+
+                    if (userShops.length === 0) {
+                        twiml.message(`⚠️ Aucun magasin trouvé pour ce numéro (${from}).\nInscrivez-vous sur : neemo-core.vercel.app/merchant/onboarding`);
+                        return new NextResponse(twiml.toString(), { headers: { 'Content-Type': 'text/xml' } });
+                    }
+
+                    let targetSlug = null;
+
+                    if (userShops.length === 1) {
+                        targetSlug = userShops[0].slug;
+                    } else {
+                        const { data: session } = await supabaseAdmin
+                            .from('merchant_sessions')
+                            .select('active_shop_slug')
+                            .eq('phone', from)
+                            .single();
+
+                        if (session?.active_shop_slug) {
+                            targetSlug = session.active_shop_slug;
+                        } else {
+                            let msg = "🏪 *Plusieurs boutiques trouvées* :\n\n";
+                            userShops.forEach((s, i) => msg += `${i + 1}. ${s.name}\n`);
+                            msg += "\nRépondez par le chiffre (ex: 1) pour choisir.";
+                            twiml.message(msg);
+                            return new NextResponse(twiml.toString(), { headers: { 'Content-Type': 'text/xml' } });
+                        }
+                    }
+
+                    // --- EXECUTION COMMANDE ---
+
                     if (command.intent === 'UPDATE_STATUS') {
                         const { error } = await supabaseAdmin
                             .from('shops')
-                            .update({ status: command.value }) // Ne touche PLUS aux horaires
-                            .eq('phone', from);
+                            .update({
+                                status: command.value,
+                                updated_at: new Date().toISOString()
+                            })
+                            .eq('slug', targetSlug);
 
                         if (error) throw new Error(`DB Error: ${error.message}`);
                         twiml.message(`✅ ${command.reply}`);
@@ -60,13 +101,15 @@ export async function POST(req: NextRequest) {
                     } else if (command.intent === 'UPDATE_HOURS') {
                         const { error } = await supabaseAdmin
                             .from('shops')
-                            .update({ hours: command.value })
-                            .eq('phone', from);
+                            .update({
+                                hours: command.value,
+                                updated_at: new Date().toISOString()
+                            })
+                            .eq('slug', targetSlug);
 
                         if (error) throw new Error(`DB Error: ${error.message}`);
                         twiml.message(`🕒 ${command.reply}`);
                     } else {
-                        // Fallback (Simple écho)
                         twiml.message(`🎙️ J'ai entendu : "${text}"`);
                     }
 
@@ -88,6 +131,73 @@ export async function POST(req: NextRequest) {
                 const command = await interpretVoiceCommand(body);
                 console.log(`[Neemo] Text Intent: ${command.intent}, Value: ${command.value}`);
 
+                // --- LOGIQUE MULTI-BOUTIQUES ---
+
+                // 1. Lister les shops du numéro
+                const { data: shops } = await supabaseAdmin
+                    .from('shops')
+                    .select('slug, name')
+                    .eq('phone', from);
+
+                const userShops = shops || [];
+
+                if (userShops.length === 0) {
+                    twiml.message(`⚠️ Aucun magasin trouvé pour ce numéro (${from}).\nInscrivez-vous sur : neemo-core.vercel.app/merchant/onboarding`);
+                    return new NextResponse(twiml.toString(), { headers: { 'Content-Type': 'text/xml' } });
+                }
+
+                let targetSlug = null;
+
+                if (userShops.length === 1) {
+                    targetSlug = userShops[0].slug;
+                } else {
+                    // Gestion Multi-Boutiques
+                    const { data: session } = await supabaseAdmin
+                        .from('merchant_sessions')
+                        .select('active_shop_slug')
+                        .eq('phone', from)
+                        .single();
+
+                    const messageText = body.toLowerCase().trim();
+
+                    // Commande de reset
+                    if (messageText === 'menu' || messageText === 'changer') {
+                        await supabaseAdmin.from('merchant_sessions').delete().eq('phone', from);
+                        let msg = "🏪 *Vos Boutiques* :\n\n";
+                        userShops.forEach((s, i) => msg += `${i + 1}. ${s.name}\n`);
+                        msg += "\nRépondez par le chiffre (ex: 1) pour choisir.";
+                        twiml.message(msg);
+                        return new NextResponse(twiml.toString(), { headers: { 'Content-Type': 'text/xml' } });
+                    }
+
+                    // Sélection d'un shop (1, 2...)
+                    const selectionIndex = parseInt(messageText) - 1;
+                    if (!isNaN(selectionIndex) && userShops[selectionIndex]) {
+                        const selectedShop = userShops[selectionIndex];
+                        // Upsert Session
+                        await supabaseAdmin.from('merchant_sessions').upsert({
+                            phone: from,
+                            active_shop_slug: selectedShop.slug,
+                            last_interaction: new Date().toISOString()
+                        });
+                        twiml.message(`✅ Vous pilotez maintenant : *${selectedShop.name}*.\nQue voulez-vous faire ?`);
+                        return new NextResponse(twiml.toString(), { headers: { 'Content-Type': 'text/xml' } });
+                    }
+
+                    if (session?.active_shop_slug) {
+                        targetSlug = session.active_shop_slug;
+                    } else {
+                        // Pas de session, on demande de choisir
+                        let msg = "🏪 *Plusieurs boutiques trouvées* :\n\n";
+                        userShops.forEach((s, i) => msg += `${i + 1}. ${s.name}\n`);
+                        msg += "\nRépondez par le chiffre (ex: 1) pour choisir.";
+                        twiml.message(msg);
+                        return new NextResponse(twiml.toString(), { headers: { 'Content-Type': 'text/xml' } });
+                    }
+                }
+
+                // --- EXECUTION COMMANDE (Sur targetSlug) ---
+
                 if (command.intent === 'UPDATE_STATUS') {
                     const { error } = await supabaseAdmin
                         .from('shops')
@@ -95,7 +205,7 @@ export async function POST(req: NextRequest) {
                             status: command.value,
                             updated_at: new Date().toISOString()
                         })
-                        .eq('phone', from);
+                        .eq('slug', targetSlug); // TARGET SLUG
 
                     if (error) throw new Error(`DB Error: ${error.message}`);
                     twiml.message(`✅ ${command.reply}`);
@@ -107,7 +217,7 @@ export async function POST(req: NextRequest) {
                             hours: command.value,
                             updated_at: new Date().toISOString()
                         })
-                        .eq('phone', from);
+                        .eq('slug', targetSlug); // TARGET SLUG
 
                     if (error) throw new Error(`DB Error: ${error.message}`);
                     twiml.message(`🕒 ${command.reply}`);
