@@ -41,8 +41,14 @@ const MOCK_SHOPS: Record<string, any> = {
         }
     };
 
-export default async function ShopPage({ params }: { params: Promise<{ slug: string }> }) {
-    const { slug } = await params;
+type Props = {
+    params: Promise<{ slug: string }>;
+    searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+};
+
+export default async function ShopPage(props: Props) {
+    const params = await props.params;
+    const slug = params.slug;
     const shop = MOCK_SHOPS[slug];
 
     if (!shop) {
