@@ -141,8 +141,8 @@ export async function interpretVoiceCommand(text: string): Promise<{ intent: str
           - 'UPDATE_HOURS': Change opening hours. Value: e.g., '09:00 - 22:00'.
           - 'OTHER': Any other request (orders, chitchat).
 
-          Return JSON: { intent, value, reply_in_darija }.
-          reply_in_darija: A short confirmation string in Darija/French mix. Example: "Safi, c'est fermé." or "D'accord, horaires mis à jour."
+          Return JSON: { intent, value, reply }.
+          reply: A short confirmation string in Darija/French mix. Example: "Safi, c'est fermé." or "D'accord, horaires mis à jour."
           `
                 },
                 {
