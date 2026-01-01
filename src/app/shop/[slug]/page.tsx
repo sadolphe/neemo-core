@@ -48,7 +48,9 @@ export default async function ShopPage(props: Props) {
         return notFound();
     }
 
-    const whatsappLink = `https://wa.me/${shop.phone}?text=Bonjour ${shop.name}, je voudrais commander...`;
+    // Clean phone number for wa.me link (remove 'whatsapp:' and '+')
+    const cleanPhone = shop.phone.replace('whatsapp:', '').replace('+', '');
+    const whatsappLink = `https://wa.me/${cleanPhone}?text=Bonjour ${shop.name}, je voudrais commander...`;
     const lastUpdate = getRelativeTime(shop.updated_at);
 
     return (
