@@ -5,8 +5,25 @@ import { openai } from '@/lib/openai';
  * Note: specific Twilio auth headers might be needed if "Enforce HTTP Auth" is on.
  */
 async function downloadMedia(url: string): Promise<Buffer> {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`Failed to download media: ${response.statusText}`);
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+
+    const headers: HeadersInit = {};
+    if (accountSid && authToken) {
+        const credentials = Buffer.from(`${accountSid}:${authToken}`).toString('base64');
+        headers['Authorization'] = `Basic ${credentials}`;
+    }
+
+    const response = await fetch(url, { headers });
+
+    // Si redirection manuelle nécessaire (certains environnements)
+    if (response.status === 302 || response.status === 301) {
+        const location = response.headers.get('location');
+        if (location) return downloadMedia(location);
+    }
+
+    if (!response.ok) throw new Error(`Failed to download media: ${response.statusText} (${response.status})`);
+
     const arrayBuffer = await response.arrayBuffer();
     return Buffer.from(arrayBuffer);
 }
