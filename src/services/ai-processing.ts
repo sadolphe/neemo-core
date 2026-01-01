@@ -24,7 +24,7 @@ async function downloadMedia(url: string): Promise<Buffer> {
     let response = await fetch(url, { headers, redirect: 'manual' });
 
     // Handle Redirect (Twilio -> S3)
-    if (response.status === 302 || response.status === 301) {
+    if ([301, 302, 307, 308].includes(response.status)) {
         const location = response.headers.get('location');
         if (location) {
             console.log('[AI] Following redirect to S3 (no auth)...');
