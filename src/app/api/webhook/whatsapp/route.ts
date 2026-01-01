@@ -4,7 +4,11 @@ import twilio from 'twilio';
 const { MessagingResponse } = twilio.twiml;
 
 export async function GET() {
-    return new NextResponse("Neemo Webhook is ACTIVE. Use POST for WhatsApp.", { status: 200 });
+    // Check: 2026-01-02 00:10
+    return new Response("Neemo Webhook is ACTIVE. Use POST for WhatsApp.", {
+        status: 200,
+        headers: { 'Content-Type': 'text/plain' }
+    });
 }
 
 export async function POST(req: NextRequest) {
