@@ -1,28 +1,41 @@
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 import { openai } from '@/lib/openai';
 
 /**
- * Downloads a file from a URL as an ArrayBuffer.
- * Note: specific Twilio auth headers might be needed if "Enforce HTTP Auth" is on.
+ * Downloads a file from a URL as an ArrayBuffer, handling Twilio 302 Redirects manually.
+ * This prevents sending Twilio Auth headers to AWS S3 (which causes S3 to reject the request).
  */
 async function downloadMedia(url: string): Promise<Buffer> {
     const accountSid = process.env.TWILIO_ACCOUNT_SID;
     const authToken = process.env.TWILIO_AUTH_TOKEN;
 
     const headers: HeadersInit = {};
-    if (accountSid && authToken) {
+    const isTwilioUrl = url.includes('twilio.com');
+
+    // Add Auth ONLY for Twilio URLs
+    if (isTwilioUrl && accountSid && authToken) {
         const credentials = Buffer.from(`${accountSid}:${authToken}`).toString('base64');
         headers['Authorization'] = `Basic ${credentials}`;
     }
 
-    const response = await fetch(url, { headers });
+    // First request with 'manual' redirect handling to catch the 302
+    let response = await fetch(url, { headers, redirect: 'manual' });
 
-    // Si redirection manuelle nécessaire (certains environnements)
+    // Handle Redirect (Twilio -> S3)
     if (response.status === 302 || response.status === 301) {
         const location = response.headers.get('location');
-        if (location) return downloadMedia(location);
+        if (location) {
+            console.log('[AI] Following redirect to S3 (no auth)...');
+            // Fetch the S3 URL *without* headers
+            response = await fetch(location);
+        }
     }
 
-    if (!response.ok) throw new Error(`Failed to download media: ${response.statusText} (${response.status})`);
+    if (!response.ok) {
+        throw new Error(`Failed to download media: ${response.status} ${response.statusText}`);
+    }
 
     const arrayBuffer = await response.arrayBuffer();
     return Buffer.from(arrayBuffer);
@@ -30,34 +43,23 @@ async function downloadMedia(url: string): Promise<Buffer> {
 
 /**
  * Transcribes audio using OpenAI Whisper.
+ * Uses /tmp directory to safely create a file stream for OpenAI SDK.
  */
 export async function transcribeAudio(mediaUrl: string): Promise<string> {
+    const tmpPath = path.join(os.tmpdir(), `neemo_${Date.now()}.ogg`);
+
     try {
         console.log(`[AI] Downloading audio from ${mediaUrl}...`);
-        // OpenAI API expects a File object for `file` in node, we can pass a ReadStream or similar.
-        // However, the new SDK supports 'fetch' Response objects or similar.
-        // Simplest in Node: download to tmp or use the `toFile` helper if available, or just pass the fetch stream if supported.
-        // Let's force a fetch and standard File object construction if possible, or simpler: use the file class from 'openai/uploads' doesn't exist publicly cleanly.
-        // Standard approach: Download -> fs.createReadStream (if saving) or simple pass as file instance.
-
-        // For Vercel/Serverless, saving to disk is tricky.
-        // Let's try passing the fetch response blob directly if supported, or buffer.
-        // OpenAI Node SDK `file` argument supports `fs.ReadStream`.
-
-        // Quick fix: Fetch, write to /tmp, read, delete. Safest for MVPs.
         const buffer = await downloadMedia(mediaUrl);
 
-        // We need a File-like object. 
-        // In strict Node envs, we can construct a File object if Node version >= 20 or polyfilled.
-        // Or we use the 'uploads' helper from openai if available.
-
-        // Let's try the direct File approach (Node 18+ has File)
-        const file = new File([buffer as unknown as BlobPart], 'voice_message.ogg', { type: 'audio/ogg' });
+        // Write to /tmp to create a valid fs.ReadStream
+        await fs.promises.writeFile(tmpPath, buffer);
+        console.log(`[AI] Audio saved to ${tmpPath}, sending to Whisper...`);
 
         const transcription = await openai.audio.transcriptions.create({
-            file: file,
+            file: fs.createReadStream(tmpPath),
             model: 'whisper-1',
-            language: 'ar', // Hint for Arabic/Darija, though Whisper is auto-detect.
+            language: 'ar',
             prompt: "Transcribe this Moroccan Darija audio which may contain mixed French/Arabic business terms.",
         });
 
@@ -65,6 +67,11 @@ export async function transcribeAudio(mediaUrl: string): Promise<string> {
     } catch (error) {
         console.error('[AI] Transcription failed:', error);
         throw error;
+    } finally {
+        // Cleanup /tmp file
+        if (fs.existsSync(tmpPath)) {
+            fs.promises.unlink(tmpPath).catch(() => { });
+        }
     }
 }
 
