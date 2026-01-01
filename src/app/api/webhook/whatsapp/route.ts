@@ -3,6 +3,7 @@ import twilio from 'twilio';
 
 const { MessagingResponse } = twilio.twiml;
 
+// Neemo Core Production v1.1.1 - Env Vars Refresh
 export async function GET() {
     return new Response("Neemo Webhook is ACTIVE. [Production v1.1]", {
         status: 200,
