@@ -184,24 +184,25 @@ export async function POST(req: NextRequest) {
                         return new NextResponse(twiml.toString(), { headers: { 'Content-Type': 'text/xml' } });
                     }
 
-                    // Sélection d'un shop (1, 2...)
-                    const selectionIndex = parseInt(messageText) - 1;
-                    if (!isNaN(selectionIndex) && userShops[selectionIndex]) {
-                        const selectedShop = userShops[selectionIndex];
-                        // Upsert Session
-                        await supabaseAdmin.from('merchant_sessions').upsert({
-                            phone: from,
-                            active_shop_slug: selectedShop.slug,
-                            last_interaction: new Date().toISOString()
-                        });
-                        twiml.message(`✅ Vous pilotez maintenant : *${selectedShop.name}*.\nQue voulez-vous faire ?`);
-                        return new NextResponse(twiml.toString(), { headers: { 'Content-Type': 'text/xml' } });
-                    }
-
+                    // Si session existe, on l'utilise
                     if (session?.active_shop_slug) {
                         targetSlug = session.active_shop_slug;
                     } else {
-                        // Pas de session, on demande de choisir
+                        // Pas de session : vérifier si c'est une sélection (1, 2...)
+                        const selectionIndex = parseInt(messageText) - 1;
+                        if (!isNaN(selectionIndex) && userShops[selectionIndex]) {
+                            const selectedShop = userShops[selectionIndex];
+                            // Upsert Session
+                            await supabaseAdmin.from('merchant_sessions').upsert({
+                                phone: from,
+                                active_shop_slug: selectedShop.slug,
+                                last_interaction: new Date().toISOString()
+                            });
+                            twiml.message(`✅ Vous pilotez maintenant : *${selectedShop.name}*.\nQue voulez-vous faire ?`);
+                            return new NextResponse(twiml.toString(), { headers: { 'Content-Type': 'text/xml' } });
+                        }
+
+                        // Pas de session ET pas de sélection valide : demander de choisir
                         let msg = "🏪 *Plusieurs boutiques trouvées* :\n\n";
                         userShops.forEach((s, i) => msg += `${i + 1}. ${s.name}\n`);
                         msg += "\nRépondez par le chiffre (ex: 1) pour choisir.";
