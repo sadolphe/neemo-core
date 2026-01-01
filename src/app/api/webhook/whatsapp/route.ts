@@ -141,11 +141,7 @@ export async function POST(req: NextRequest) {
                 const { interpretVoiceCommand } = await import('@/services/ai-processing');
                 const { supabaseAdmin } = await import('@/lib/supabase');
 
-                // Utilisation directe du texte reçu
-                const command = await interpretVoiceCommand(body);
-                console.log(`[Neemo] Text Intent: ${command.intent}, Value: ${command.value}`);
-
-                // --- LOGIQUE MULTI-BOUTIQUES ---
+                // --- LOGIQUE MULTI-BOUTIQUES (AVANT L'IA) ---
 
                 // 1. Lister les shops du numéro
                 const { data: shops } = await supabaseAdmin
@@ -211,7 +207,11 @@ export async function POST(req: NextRequest) {
                     }
                 }
 
-                // --- EXECUTION COMMANDE (Sur targetSlug) ---
+                // --- INTERPRETATION IA (Seulement si on a un targetSlug) ---
+
+                // Utilisation directe du texte reçu
+                const command = await interpretVoiceCommand(body);
+                console.log(`[Neemo] Text Intent: ${command.intent}, Value: ${command.value}`);
 
                 // Refresh session timestamp
                 if (userShops.length > 1 && targetSlug) {
