@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 // Mock Data pour le prototype
 // En production, ça viendra de Supabase : await supabase.from('shops').select('*').eq('slug', params.slug)
 const MOCK_SHOPS: Record<string, any> = {
