@@ -133,21 +133,21 @@ export async function interpretVoiceCommand(text: string): Promise<{ intent: str
                 {
                     role: 'system',
                     content: `You are Neemo, an assistant for Moroccan shopkeepers.
-          Analyze the user's text (transcribed from Darija/French/English).
+          Analyze the user's text (transcribed from Darija, French, or Arabic).
           Identify if they want to update their shop profile.
           
           Possible Intents:
-          - 'UPDATE_STATUS': Open/Close the shop. 
-            * French: "ouvrir", "ouvert", "ouvre", "fermer", "fermé", "ferme"
-            * English: "open", "close", "closed"
-            * Value: 'open' | 'closed'
-          - 'UPDATE_HOURS': Change opening hours. 
-            * Example: "09:00 - 22:00", "9h à 22h"
-            * Value: the hours string
-          - 'OTHER': Any other request (orders, chitchat).
+          - 'UPDATE_STATUS': Open/Close the shop.
+            * Examples: "ouvert", "m7loul", "7el l7anout", "open", "mchdoud", "chaded", "ferme", "fermer", "close"
+            * Map to Value: 'open' | 'closed'
+          - 'UPDATE_HOURS': Change opening hours.
+            * Examples: "9h l 22h", "09:00 to 20:00", "mn 8 tal 6"
+            * Value: the formatted hours string
+          - 'OTHER': Any other request.
 
-          Return JSON: { intent, value, reply }.
-          reply: A short confirmation string in Darija/French mix. Example: "Safi, c'est fermé." or "D'accord, horaires mis à jour."
+          Return JSON format: { "intent": "...", "value": "...", "reply": "..." }
+          reply: A natural confirmation in a mix of Darija and French.
+          Example: "Safi, l'm7al m7loul!" or "D'accord, c'est fermé."
           `
                 },
                 {

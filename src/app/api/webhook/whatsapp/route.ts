@@ -250,10 +250,12 @@ export async function POST(req: NextRequest) {
                     twiml.message(`👋 Marhba ! J'ai bien reçu : "${body}".\n\n(Envoyez une commande claire comme "Ferme le magasin" ou une photo de facture)`);
                 }
             } catch (e) {
-                console.error(e);
-                twiml.message("⚠️ Je n'arrive pas à comprendre ce message.");
+                console.error('[Neemo] Text Error:', e);
+                twiml.message(`⚠️ Erreur (Texte): ${e instanceof Error ? e.message : 'Inconnue'}`);
             }
         }
+
+        console.log(`[Neemo] Final TwiML: ${twiml.toString()}`);
 
         // 3. Retour de la réponse XML
         return new NextResponse(twiml.toString(), {
@@ -262,7 +264,12 @@ export async function POST(req: NextRequest) {
             },
         });
     } catch (error) {
-        console.error('[Neemo] Error processing webhook:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        console.error('[Neemo] Critical Error:', error);
+        // Fallback TwiML even for critical errors so the user sees SOMETHING
+        const errorTwiml = new MessagingResponse();
+        errorTwiml.message("❌ Neemo a un petit problème technique. Réessayez dans un instant.");
+        return new NextResponse(errorTwiml.toString(), {
+            headers: { 'Content-Type': 'text/xml' },
+        });
     }
 }
