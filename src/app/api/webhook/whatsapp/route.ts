@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { transcribeAudio, interpretVoiceCommand, analyzeInvoiceImage } from '@/services/ai-processing';
 
 const { MessagingResponse } = twilio.twiml;
+// Checkpoint: 2026-01-02 00:06
 
 export async function POST(req: NextRequest) {
     const twiml = new MessagingResponse();
