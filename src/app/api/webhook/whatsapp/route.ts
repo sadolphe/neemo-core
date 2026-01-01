@@ -56,6 +56,7 @@ export async function POST(req: NextRequest) {
                         .eq('phone', from);
 
                     const userShops = shops || [];
+                    console.log(`[DEBUG] Phone: ${from}, Shops found: ${userShops.length}`);
 
                     if (userShops.length === 0) {
                         twiml.message(`⚠️ Aucun magasin trouvé pour ce numéro (${from}).\nInscrivez-vous sur : neemo-core.vercel.app/merchant/onboarding`);
@@ -66,6 +67,7 @@ export async function POST(req: NextRequest) {
 
                     if (userShops.length === 1) {
                         targetSlug = userShops[0].slug;
+                        console.log(`[DEBUG] Single shop mode: ${targetSlug}`);
                     } else {
                         const { data: session } = await supabaseAdmin
                             .from('merchant_sessions')
@@ -73,8 +75,11 @@ export async function POST(req: NextRequest) {
                             .eq('phone', from)
                             .maybeSingle();
 
+                        console.log(`[DEBUG] Multi-shop mode. Session found:`, session);
+
                         if (session?.active_shop_slug) {
                             targetSlug = session.active_shop_slug;
+                            console.log(`[DEBUG] Using session slug: ${targetSlug}`);
                         } else {
                             let msg = "🏪 *Plusieurs boutiques trouvées* :\n\n";
                             userShops.forEach((s, i) => msg += `${i + 1}. ${s.name}\n`);
