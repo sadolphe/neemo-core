@@ -49,36 +49,22 @@ export async function POST(req: NextRequest) {
                     console.log(`[Neemo] Intent: ${command.intent}, Value: ${command.value}`);
 
                     if (command.intent === 'UPDATE_STATUS') {
-                        const { data, error } = await supabaseAdmin
+                        const { error } = await supabaseAdmin
                             .from('shops')
-                            .update({ status: command.value, hours: command.value === 'closed' ? 'Fermé' : undefined })
-                            .eq('phone', from)
-                            .select(); // Important to get returned rows
+                            .update({ status: command.value }) // Ne touche PLUS aux horaires
+                            .eq('phone', from);
 
                         if (error) throw new Error(`DB Error: ${error.message}`);
-
-                        const count = data?.length || 0;
-                        if (count === 0) {
-                            twiml.message(`⚠️ Bizarre... Je n'ai trouvé aucun magasin avec le numéro ${from} dans la base.\nVérifiez le numéro dans Supabase.`);
-                        } else {
-                            twiml.message(`✅ ${command.reply}\n(Modifié ${count} magasin(s) pour ${from})`);
-                        }
+                        twiml.message(`✅ ${command.reply}`);
 
                     } else if (command.intent === 'UPDATE_HOURS') {
-                        const { data, error } = await supabaseAdmin
+                        const { error } = await supabaseAdmin
                             .from('shops')
                             .update({ hours: command.value })
-                            .eq('phone', from)
-                            .select();
+                            .eq('phone', from);
 
                         if (error) throw new Error(`DB Error: ${error.message}`);
-
-                        const count = data?.length || 0;
-                        if (count === 0) {
-                            twiml.message(`⚠️ Bizarre... Je n'ai trouvé aucun magasin avec le numéro ${from} dans la base.\nVérifiez le numéro dans Supabase.`);
-                        } else {
-                            twiml.message(`🕒 ${command.reply}\n(Modifié ${count} magasin(s))`);
-                        }
+                        twiml.message(`🕒 ${command.reply}`);
                     } else {
                         // Fallback (Simple écho)
                         twiml.message(`🎙️ J'ai entendu : "${text}"`);
