@@ -86,6 +86,15 @@ export async function POST(req: NextRequest) {
 
                     // --- EXECUTION COMMANDE ---
 
+                    // Refresh session timestamp
+                    if (userShops.length > 1 && targetSlug) {
+                        await supabaseAdmin.from('merchant_sessions').upsert({
+                            phone: from,
+                            active_shop_slug: targetSlug,
+                            last_interaction: new Date().toISOString()
+                        });
+                    }
+
                     if (command.intent === 'UPDATE_STATUS') {
                         const { error } = await supabaseAdmin
                             .from('shops')
@@ -197,6 +206,15 @@ export async function POST(req: NextRequest) {
                 }
 
                 // --- EXECUTION COMMANDE (Sur targetSlug) ---
+
+                // Refresh session timestamp
+                if (userShops.length > 1 && targetSlug) {
+                    await supabaseAdmin.from('merchant_sessions').upsert({
+                        phone: from,
+                        active_shop_slug: targetSlug,
+                        last_interaction: new Date().toISOString()
+                    });
+                }
 
                 if (command.intent === 'UPDATE_STATUS') {
                     const { error } = await supabaseAdmin
