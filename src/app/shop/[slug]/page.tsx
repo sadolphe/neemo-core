@@ -19,6 +19,19 @@ type Props = {
     searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
+// Helper pour formater "Il y a X min"
+function getRelativeTime(dateString?: string) {
+    if (!dateString) return "Récemment";
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (diffInSeconds < 60) return "À l'instant";
+    if (diffInSeconds < 3600) return `Il y a ${Math.floor(diffInSeconds / 60)} min`;
+    if (diffInSeconds < 86400) return `Il y a ${Math.floor(diffInSeconds / 3600)} h`;
+    return `Il y a ${Math.floor(diffInSeconds / 86400)} j`;
+}
+
 export default async function ShopPage(props: Props) {
     const params = await props.params;
     const { slug } = params;
@@ -35,10 +48,8 @@ export default async function ShopPage(props: Props) {
         return notFound();
     }
 
-    // Sécurité: Si le magasin est fermé, on le montre quand même mais avec un overlay (à faire plus tard)
-    // Pour l'instant on affiche juste le status.
-
     const whatsappLink = `https://wa.me/${shop.phone}?text=Bonjour ${shop.name}, je voudrais commander...`;
+    const lastUpdate = getRelativeTime(shop.updated_at);
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans text-slate-800">
@@ -93,7 +104,7 @@ export default async function ShopPage(props: Props) {
                             🕒 {shop.hours}
                         </p>
                         <p className="text-xs text-slate-500 mt-1 italic">
-                            "Mise à jour par Neemo : Aujourd'hui à 11h"
+                            Mise à jour par Neemo : {lastUpdate}
                         </p>
                     </div>
 

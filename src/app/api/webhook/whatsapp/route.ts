@@ -91,7 +91,10 @@ export async function POST(req: NextRequest) {
                 if (command.intent === 'UPDATE_STATUS') {
                     const { error } = await supabaseAdmin
                         .from('shops')
-                        .update({ status: command.value })
+                        .update({
+                            status: command.value,
+                            updated_at: new Date().toISOString()
+                        })
                         .eq('phone', from);
 
                     if (error) throw new Error(`DB Error: ${error.message}`);
@@ -100,7 +103,10 @@ export async function POST(req: NextRequest) {
                 } else if (command.intent === 'UPDATE_HOURS') {
                     const { error } = await supabaseAdmin
                         .from('shops')
-                        .update({ hours: command.value })
+                        .update({
+                            hours: command.value,
+                            updated_at: new Date().toISOString()
+                        })
                         .eq('phone', from);
 
                     if (error) throw new Error(`DB Error: ${error.message}`);
