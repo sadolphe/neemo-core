@@ -133,12 +133,17 @@ export async function interpretVoiceCommand(text: string): Promise<{ intent: str
                 {
                     role: 'system',
                     content: `You are Neemo, an assistant for Moroccan shopkeepers.
-          Analyze the user's text (transcribed from Darija/French).
+          Analyze the user's text (transcribed from Darija/French/English).
           Identify if they want to update their shop profile.
           
           Possible Intents:
-          - 'UPDATE_STATUS': Open/Close the shop. Value: 'open' | 'closed'.
-          - 'UPDATE_HOURS': Change opening hours. Value: e.g., '09:00 - 22:00'.
+          - 'UPDATE_STATUS': Open/Close the shop. 
+            * French: "ouvrir", "ouvert", "ouvre", "fermer", "fermé", "ferme"
+            * English: "open", "close", "closed"
+            * Value: 'open' | 'closed'
+          - 'UPDATE_HOURS': Change opening hours. 
+            * Example: "09:00 - 22:00", "9h à 22h"
+            * Value: the hours string
           - 'OTHER': Any other request (orders, chitchat).
 
           Return JSON: { intent, value, reply }.
