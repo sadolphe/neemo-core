@@ -85,7 +85,7 @@ function DashboardContent() {
                                     type="text"
                                     readOnly
                                     value={shopUrl}
-                                    className="bg-slate-50 border border-slate-200 text-slate-600 text-sm rounded-lg p-3 w-full"
+                                    className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg p-3 w-full"
                                 />
                                 <button
                                     onClick={() => navigator.clipboard.writeText(shopUrl)}
