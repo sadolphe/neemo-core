@@ -58,9 +58,10 @@ export async function POST(req: NextRequest) {
                         twiml.message(`🎙️ J'ai entendu : "${text}"`);
                     }
 
-                } catch (e) {
+                } catch (e: any) {
                     console.error(e);
-                    twiml.message("⚠️ Je n'arrive pas à écouter ce message.");
+                    // DEBUG MODE: Afficher l'erreur exacte sur WhatsApp
+                    twiml.message(`⚠️ Erreur Audio: ${e.message}`);
                 }
             } else {
                 twiml.message("📁 Fichier reçu. Envoyez une image ou un vocal.");
