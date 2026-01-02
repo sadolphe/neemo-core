@@ -29,7 +29,7 @@ function playlistDecimal(price: string | number) {
     return p.split('.')[1];
 }
 
-export default function ShopClient({ shop }: { shop: any }) {
+export default function ShopClient({ shop }: { shop: Shop }) {
     const [filter, setFilter] = useState('');
     const [cart, setCart] = useState<{ name: string; price: number; quantity: number }[]>([]);
     const [showCartModal, setShowCartModal] = useState(false);
