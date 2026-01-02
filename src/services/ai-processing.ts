@@ -137,6 +137,12 @@ export async function interpretVoiceCommand(text: string): Promise<{ intent: str
           Identify if they want to update their shop profile.
           
           Possible Intents:
+          - 'KARNACH_DEBT': Add debt to a customer.
+            * Examples: "Crédit Hassan 20dh", "Marki 3la Fatima 50", "Il me doit 10dh Ahmed", "Ajoute 20dh l Hassan"
+            * Map to Value: JSON string { "customer": "Hassan", "amount": 20 }
+          - 'KARNACH_PAYMENT': Customer pays debt or leaves change.
+            * Examples: "Hassan a payé 20dh", "Remboursement Fatima 50", "Laisse 2dh monnaie Mehdi"
+            * Map to Value: JSON string { "customer": "Hassan", "amount": 20 }
           - 'UPDATE_STATUS': Open/Close the shop.
             * Examples: "ouvert", "m7loul", "7el l7anout", "open", "mchdoud", "chaded", "ferme", "fermer", "close"
             * Map to Value: 'open' | 'closed'
@@ -147,7 +153,7 @@ export async function interpretVoiceCommand(text: string): Promise<{ intent: str
 
           Return JSON format: { "intent": "...", "value": "...", "reply": "..." }
           reply: A natural confirmation in a mix of Darija and French.
-          Example: "Safi, l'm7al m7loul!" or "D'accord, c'est fermé."
+          Example: "Safi, marqués sur Hassan!" or "D'accord, c'est noté."
           `
                 },
                 {

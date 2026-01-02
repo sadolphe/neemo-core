@@ -117,17 +117,25 @@ export default async function ShopPage(props: Props) {
                 </div>
 
                 {/* Featured Products (Mini Vitrine) */}
-                {shop.products.length > 0 && (
+                {shop.products && shop.products.filter((p: any) => Number(p.quantity) > 0).length > 0 && (
                     <div className="mt-8">
                         <h2 className="text-lg font-bold text-slate-900 mb-4">Top Ventes 🔥</h2>
                         <div className="grid grid-cols-2 gap-3">
-                            {shop.products.map((p: any, i: number) => (
-                                <div key={i} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex flex-col items-center text-center">
-                                    <div className="text-4xl mb-2">{p.image}</div>
-                                    <div className="font-medium text-slate-800 text-sm line-clamp-1">{p.name}</div>
-                                    <div className="text-green-600 font-bold text-sm">{p.price} DH</div>
-                                </div>
-                            ))}
+                            {shop.products
+                                .filter((p: any) => Number(p.quantity) > 0)
+                                .map((p: any, i: number) => (
+                                    <div key={i} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex flex-col items-center text-center">
+                                        <div className="w-full aspect-square rounded-lg bg-slate-50 mb-2 overflow-hidden flex items-center justify-center">
+                                            {p.image_url ? (
+                                                <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="text-4xl">📦</span>
+                                            )}
+                                        </div>
+                                        <div className="font-medium text-slate-800 text-sm line-clamp-1">{p.name}</div>
+                                        <div className="text-green-600 font-bold text-sm">{p.price} DH</div>
+                                    </div>
+                                ))}
                         </div>
                     </div>
                 )}

@@ -81,7 +81,7 @@ function DashboardContent() {
                     <div className="space-y-6">
 
                         {/* Carte QR Code */}
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col items-center text-center sticky top-6">
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col items-center text-center sticky top-6 z-10">
                             <h2 className="font-bold text-slate-800 mb-4">📢 Votre QR Code</h2>
 
                             <div className="bg-white p-2 border-2 border-slate-900 rounded-xl mb-4 shadow-sm">
@@ -125,6 +125,44 @@ function DashboardContent() {
                             </div>
                         </div>
 
+                        {/* Carte Inventaire (NEW) */}
+                        <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-lg shadow-slate-200">
+                            <h2 className="font-bold text-lg mb-2">📦 Stock & Factures</h2>
+                            <p className="text-slate-400 text-sm mb-4">Gérez votre stock par IA : scannez vos factures ou vos rayons.</p>
+                            <Link
+                                href={`/merchant/inventory?slug=${slug}`}
+                                className="block w-full bg-white text-slate-900 text-center py-3 rounded-xl font-bold hover:bg-slate-100 transition-colors"
+                            >
+                                Gérer mon Stock ✨
+                            </Link>
+                        </div>
+
+                        {/* Carte Caisse Express (NEW) */}
+                        <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-lg shadow-slate-200">
+                            <h2 className="font-bold text-lg mb-2">🏪 Caisse Express</h2>
+                            <p className="text-slate-400 text-sm mb-4">Encaissez rapidement (Cash ou Crédit).</p>
+                            <Link
+                                href={`/merchant/pos?slug=${slug}`}
+                                className="block w-full bg-white text-slate-900 text-center py-3 rounded-xl font-bold hover:bg-slate-100 transition-colors"
+                            >
+                                Ouvrir la Caisse 🏧
+                            </Link>
+                        </div>
+
+                        {/* Carte Karnach (NEW) */}
+                        <div className="bg-gradient-to-br from-blue-600 to-blue-800 text-white p-6 rounded-2xl shadow-lg shadow-blue-200">
+                            <div className="flex justify-between items-start mb-2">
+                                <h2 className="font-bold text-lg">📒 Karnach Digital</h2>
+                                <span className="text-xs bg-white/20 px-2 py-1 rounded font-bold">Nouveau</span>
+                            </div>
+                            <p className="text-blue-100 text-sm mb-4">Gérez les crédits, dettes et la monnaie de vos clients.</p>
+                            <Link
+                                href={`/merchant/karnach?slug=${slug}`}
+                                className="block w-full bg-white text-blue-900 text-center py-3 rounded-xl font-bold hover:bg-blue-50 transition-colors"
+                            >
+                                Ouvrir mon Karnach 📖
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </div>
