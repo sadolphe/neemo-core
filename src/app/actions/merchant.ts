@@ -53,3 +53,21 @@ export async function updateShopProducts(shopId: string, slug: string, products:
 
     return { success: true };
 }
+
+export async function getUploadParams(fileName: string) {
+    console.log(`[ACTION] Generating Signed URL for ${fileName}...`);
+
+    // Create a strict path
+    // Note: createSignedUploadUrl creates a URL that allows uploading ONE file to that path.
+    const { data, error } = await supabaseAdmin
+        .storage
+        .from('vision-uploads')
+        .createSignedUploadUrl(fileName);
+
+    if (error) {
+        console.error("Presign Error:", error);
+        return { error: error.message };
+    }
+
+    return { success: true, data };
+}

@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { analyzeInvoice, analyzeShelf, pingServer } from '@/app/actions/vision';
+import { getUploadParams } from '@/app/actions/merchant';
 import StockReconciliation from '@/components/merchant/StockReconciliation';
 import { supabase } from '@/lib/supabase';
 
@@ -153,32 +154,48 @@ function InventoryContent() {
         setShowSuccess(false);
         setErrorMessage(null);
 
+        console.log("🚀 Starting upload process...", file.name, file.size);
+
         try {
-            // 1. Resize/Compress (Client Side)
+            // 1. Resize/Compress
+            console.log("➡️ Step 1: Resizing...");
             const resizedBlob = await resizeImage(file);
             const resizedFile = new File([resizedBlob], file.name, { type: 'image/jpeg' });
 
-            // 2. Upload to Supabase Storage (Robust)
+            // 2. Get Signed URL from Server (Bypass RLS)
             const fileName = `${slug}/${Date.now()}_${file.name.replace(/\s/g, '_')}`;
-            const { data: uploadData, error: uploadError } = await supabase.storage
-                .from('vision-uploads')
-                .upload(fileName, resizedFile);
+            console.log("➡️ Step 2: Requesting Signed URL for:", fileName);
 
-            if (uploadError) {
-                console.error("Storage Upload Error:", uploadError);
-                throw new Error("Echec de l'envoi de l'image (Storage). Réessayez.");
+            const signResult = await getUploadParams(fileName);
+            if (!signResult.success || !signResult.data) {
+                throw new Error("Impossible d'obtenir l'autorisation d'upload: " + signResult.error);
             }
 
-            // 3. Get Public URL
+            const { token, path } = signResult.data; // createSignedUploadUrl returns { signedUrl, path, token }
+
+            // 3. Upload to Signed URL
+            console.log("➡️ Step 3: Uploading to Signed URL...");
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('vision-uploads')
+                .uploadToSignedUrl(path, token, resizedFile);
+
+            if (uploadError) {
+                console.error("❌ Signed Upload Error:", uploadError);
+                throw new Error("Erreur Upload Signé: " + uploadError.message);
+            }
+
+            // 4. Get Public URL (It's still public read, just write was restricted)
+            console.log("➡️ Step 4: Getting Public URL...");
             const { data: { publicUrl } } = supabase.storage
                 .from('vision-uploads')
-                .getPublicUrl(fileName);
+                .getPublicUrl(path);
 
-            console.log("Image uploaded to:", publicUrl);
+            console.log("✅ Image uploaded to:", publicUrl);
 
-            // 4. Send URL to Server Action (No Timeout risk)
+            // 5. Analyze
+            console.log("➡️ Step 5: Calling AI...");
             const result = await (activeTab === 'shelf' ? analyzeShelf(publicUrl) : analyzeInvoice(publicUrl));
-            console.log("Server Action returned:", result);
+            console.log("✅ AI Result:", result);
 
             setIsAnalyzing(false);
 
@@ -189,10 +206,18 @@ function InventoryContent() {
                 setErrorMessage(result.error || "L'IA n'a pas pu lire l'image.");
             }
         } catch (err: any) {
-            console.error("CATCH BLOCK ERROR:", err);
+            console.error("🔥 CATCH BLOCK ERROR:", err);
+            // Log specific properties if it's an object
+            if (typeof err === 'object') {
+                console.error("Error keys:", Object.keys(err));
+                console.error("Error name:", err.name);
+                console.error("Error message:", err.message);
+                console.error("Error stack:", err.stack);
+            }
+
             setIsAnalyzing(false);
-            const msg = err?.message || (typeof err === 'object' ? JSON.stringify(err) : String(err));
-            setErrorMessage(msg || "Erreur technique. Vérifiez votre connexion.");
+            const msg = err?.message || "Erreur technique inconnue (Check Console).";
+            setErrorMessage(msg);
         }
     };
 
