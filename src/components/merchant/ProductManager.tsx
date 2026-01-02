@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { updateShopProducts } from '@/app/actions/merchant';
 
 interface Product {
     name: string;
     price: string;
     image: string;
+    _ui_id?: string; // ID temporaire pour l'UI (React Keys)
 }
 
 interface ProductManagerProps {
@@ -15,8 +16,18 @@ interface ProductManagerProps {
 }
 
 export default function ProductManager({ shop, onUpdate }: ProductManagerProps) {
-    const [products, setProducts] = useState<Product[]>(shop.products || []);
+    // Initialisation avec IDs stables
+    const [products, setProducts] = useState<Product[]>(() =>
+        (shop.products || []).map((p: Product) => ({ ...p, _ui_id: crypto.randomUUID() }))
+    );
     const [isSaving, setIsSaving] = useState(false);
+
+    // Sync state if parent updates (e.g. after refresh)
+    useEffect(() => {
+        if (shop.products) {
+            setProducts(shop.products.map((p: Product) => ({ ...p, _ui_id: crypto.randomUUID() })));
+        }
+    }, [shop.products]);
 
     // New Product Form State
     const [newProduct, setNewProduct] = useState<Product>({ name: '', price: '', image: '📦' });
@@ -27,36 +38,52 @@ export default function ProductManager({ shop, onUpdate }: ProductManagerProps) 
         if (!newProduct.name || !newProduct.price) return;
 
         setIsSaving(true);
-        const updatedProducts = [...products, newProduct];
+
+        // Clean product for DB (remove _ui_id)
+        const productToSave = {
+            name: newProduct.name,
+            price: newProduct.price,
+            image: newProduct.image
+        };
+
+        // Optimistic UI Update
+        const tempId = crypto.randomUUID();
+        const updatedProductsUI = [...products, { ...productToSave, _ui_id: tempId }];
+        setProducts(updatedProductsUI);
+
+        // Sanitize for DB (remove UI IDs from ALL products)
+        const dbProducts = updatedProductsUI.map(({ _ui_id, ...rest }) => rest);
 
         // Call Server Action
-        const result = await updateShopProducts(shop.id, shop.slug, updatedProducts);
+        const result = await updateShopProducts(shop.id, shop.slug, dbProducts);
 
         setIsSaving(false);
         if (result.error) {
             console.error(result.error);
             alert('Erreur ajout produit');
+            // Rollback could go here
         } else {
-            setProducts(updatedProducts);
             setNewProduct({ name: '', price: '', image: '📦' });
             setIsAdding(false);
             onUpdate();
         }
     };
 
-    const handleDeleteProduct = async (index: number) => {
-        if (!confirm('Voulez-vous supprimer ce produit ?')) return;
+    const handleDeleteProduct = async (uiId: string) => {
+        // Find index/product by UI ID to prevent index shifts bugs
+        const updatedProductsUI = products.filter(p => p._ui_id !== uiId);
 
         setIsSaving(true);
-        const updatedProducts = products.filter((_, i) => i !== index);
+        setProducts(updatedProductsUI); // Optimistic
 
-        const result = await updateShopProducts(shop.id, shop.slug, updatedProducts);
+        const dbProducts = updatedProductsUI.map(({ _ui_id, ...rest }) => rest);
+
+        const result = await updateShopProducts(shop.id, shop.slug, dbProducts);
 
         setIsSaving(false);
         if (result.error) {
             alert('Erreur suppression');
         } else {
-            setProducts(updatedProducts);
             onUpdate();
         }
     };
@@ -109,13 +136,12 @@ export default function ProductManager({ shop, onUpdate }: ProductManagerProps) 
                 {products.length === 0 ? (
                     <p className="text-slate-400 text-center py-4 text-sm">Aucun produit. Ajoutez-en un !</p>
                 ) : (
-                    products.map((p, i) => (
+                    products.map((p) => (
                         <ProductRow
-                            key={i}
+                            key={p._ui_id} // Clé Unique Stable !
                             product={p}
-                            index={i}
                             isSaving={isSaving}
-                            onDelete={() => handleDeleteProduct(i)}
+                            onDelete={() => p._ui_id && handleDeleteProduct(p._ui_id)}
                         />
                     ))
                 )}
@@ -124,7 +150,7 @@ export default function ProductManager({ shop, onUpdate }: ProductManagerProps) 
     );
 }
 
-function ProductRow({ product, index, isSaving, onDelete }: { product: Product, index: number, isSaving: boolean, onDelete: () => void }) {
+function ProductRow({ product, isSaving, onDelete }: { product: Product, isSaving: boolean, onDelete: () => void }) {
     const [showConfirm, setShowConfirm] = useState(false);
 
     if (showConfirm) {
