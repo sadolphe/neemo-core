@@ -80,64 +80,7 @@ function DashboardContent() {
                     {/* COLONNE DROITE : QR Code & Outils */}
                     <div className="space-y-6">
 
-                        {/* Carte QR Code */}
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col items-center text-center sticky top-6 z-10">
-                            <h2 className="font-bold text-slate-800 mb-4">📢 Votre QR Code</h2>
-
-                            <div className="bg-white p-2 border-2 border-slate-900 rounded-xl mb-4 shadow-sm">
-                                {shopUrl && (
-                                    <QRCodeSVG
-                                        value={shopUrl}
-                                        size={180}
-                                        level="H"
-                                        includeMargin={true}
-                                    />
-                                )}
-                            </div>
-
-                            <p className="text-xs text-slate-400 mb-4">
-                                Scannez pour tester ou imprimez pour votre vitrine.
-                            </p>
-
-                            <button
-                                onClick={() => window.print()}
-                                className="w-full bg-slate-900 text-white px-4 py-3 rounded-xl font-medium hover:bg-slate-800 transition-colors flex justify-center gap-2 items-center"
-                            >
-                                🖨️ Imprimer l'affiche
-                            </button>
-
-                            <div className="mt-6 w-full pt-6 border-t border-slate-100">
-                                <h3 className="text-sm font-bold text-slate-500 mb-2 text-left">LIEN DIRECT</h3>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        readOnly
-                                        value={shopUrl}
-                                        className="bg-slate-100 border-none text-slate-600 text-xs rounded-lg p-3 w-full font-mono"
-                                    />
-                                    <button
-                                        onClick={() => navigator.clipboard.writeText(shopUrl)}
-                                        className="bg-blue-100 text-blue-600 px-3 rounded-lg font-bold hover:bg-blue-200 text-xs"
-                                    >
-                                        COPIER
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Carte Inventaire (NEW) */}
-                        <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-lg shadow-slate-200">
-                            <h2 className="font-bold text-lg mb-2">📦 Stock & Factures</h2>
-                            <p className="text-slate-400 text-sm mb-4">Gérez votre stock par IA : scannez vos factures ou vos rayons.</p>
-                            <Link
-                                href={`/merchant/inventory?slug=${slug}`}
-                                className="block w-full bg-white text-slate-900 text-center py-3 rounded-xl font-bold hover:bg-slate-100 transition-colors"
-                            >
-                                Gérer mon Stock ✨
-                            </Link>
-                        </div>
-
-                        {/* Carte Caisse Express (NEW) */}
+                        {/* Carte Caisse Express (Top Priority) */}
                         <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-lg shadow-slate-200">
                             <h2 className="font-bold text-lg mb-2">🏪 Caisse Express</h2>
                             <p className="text-slate-400 text-sm mb-4">Encaissez rapidement (Cash ou Crédit).</p>
@@ -149,7 +92,7 @@ function DashboardContent() {
                             </Link>
                         </div>
 
-                        {/* Carte Karnach (NEW) */}
+                        {/* Carte Karnach */}
                         <div className="bg-gradient-to-br from-blue-600 to-blue-800 text-white p-6 rounded-2xl shadow-lg shadow-blue-200">
                             <div className="flex justify-between items-start mb-2">
                                 <h2 className="font-bold text-lg">📒 Karnach Digital</h2>
@@ -163,6 +106,59 @@ function DashboardContent() {
                                 Ouvrir mon Karnach 📖
                             </Link>
                         </div>
+
+                        {/* Carte Inventaire */}
+                        <div className="bg-slate-800 text-white p-6 rounded-2xl shadow-sm border border-slate-700">
+                            <h2 className="font-bold text-lg mb-2">📦 Stock & Factures</h2>
+                            <p className="text-slate-400 text-sm mb-4">Gérez votre stock par IA : scannez vos factures ou vos rayons.</p>
+                            <Link
+                                href={`/merchant/inventory?slug=${slug}`}
+                                className="block w-full bg-white text-slate-900 text-center py-3 rounded-xl font-bold hover:bg-slate-100 transition-colors"
+                            >
+                                Gérer mon Stock ✨
+                            </Link>
+                        </div>
+
+                        {/* Carte QR Code (Moved to Bottom) */}
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col items-center text-center">
+                            <h2 className="font-bold text-slate-800 mb-4">📢 Votre QR Code</h2>
+
+                            <div className="bg-white p-2 border-2 border-slate-900 rounded-xl mb-4 shadow-sm">
+                                {shopUrl && (
+                                    <QRCodeSVG
+                                        value={shopUrl}
+                                        size={140}
+                                        level="H"
+                                        includeMargin={true}
+                                    />
+                                )}
+                            </div>
+
+                            <p className="text-xs text-slate-400 mb-4">
+                                Scannez pour tester ou imprimez pour votre vitrine.
+                            </p>
+
+                            <button
+                                onClick={() => window.print()}
+                                className="w-full bg-slate-50 text-slate-900 px-4 py-3 rounded-xl font-medium hover:bg-slate-100 transition-colors flex justify-center gap-2 items-center text-sm border border-slate-200"
+                            >
+                                🖨️ Imprimer l'affiche
+                            </button>
+
+                            <div className="mt-6 w-full pt-6 border-t border-slate-100 hidden md:block">
+                                <h3 className="text-sm font-bold text-slate-500 mb-2 text-left">LIEN DIRECT</h3>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={shopUrl}
+                                        className="bg-slate-100 border-none text-slate-600 text-xs rounded-lg p-3 w-full font-mono"
+                                    />
+                                    <CopyButton text={shopUrl} />
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -226,6 +222,28 @@ function DashboardContent() {
                 }
             `}</style>
         </div>
+    );
+}
+
+function CopyButton({ text }: { text: string }) {
+    const [isCopied, setIsCopied] = useState(false);
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(text);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+    };
+
+    return (
+        <button
+            onClick={handleCopy}
+            className={`px-3 rounded-lg font-bold text-xs transition-all duration-200 ${isCopied
+                ? 'bg-green-100 text-green-700 scale-105'
+                : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+                }`}
+        >
+            {isCopied ? 'COPIÉ !' : 'COPIER'}
+        </button>
     );
 }
 

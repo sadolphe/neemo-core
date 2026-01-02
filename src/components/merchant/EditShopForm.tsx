@@ -59,8 +59,8 @@ export default function EditShopForm({ shop, onUpdate }: EditShopFormProps) {
                         type="button"
                         onClick={toggleStatus}
                         className={`px-4 py-2 rounded-lg font-bold transition-colors ${formData.status === 'open'
-                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                                : 'bg-red-100 text-red-700 hover:bg-red-200'
+                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                            : 'bg-red-100 text-red-700 hover:bg-red-200'
                             }`}
                     >
                         {formData.status === 'open' ? '🟢 OUVERT' : '🔴 FERMÉ'}
@@ -68,36 +68,36 @@ export default function EditShopForm({ shop, onUpdate }: EditShopFormProps) {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Nom de la boutique</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Nom de la boutique</label>
                     <input
                         type="text"
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
-                        className="w-full p-3 border border-slate-200 rounded-xl"
+                        className="w-full p-3 border border-slate-200 rounded-xl text-slate-900 font-medium placeholder:text-slate-500"
                     />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Description (Bio)</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Description (Bio)</label>
                     <textarea
                         name="description"
                         value={formData.description}
                         onChange={handleChange}
                         rows={3}
-                        className="w-full p-3 border border-slate-200 rounded-xl"
+                        className="w-full p-3 border border-slate-200 rounded-xl text-slate-900 font-medium placeholder:text-slate-500"
                         placeholder="Ex: Spécialiste des produits frais..."
                     />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Horaires (Texte libre)</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Horaires (Texte libre)</label>
                     <input
                         type="text"
                         name="hours"
                         value={formData.hours}
                         onChange={handleChange}
-                        className="w-full p-3 border border-slate-200 rounded-xl"
+                        className="w-full p-3 border border-slate-200 rounded-xl text-slate-900 font-medium placeholder:text-slate-500"
                         placeholder="Ex: 8h00 - 20h00, 7j/7"
                     />
                 </div>

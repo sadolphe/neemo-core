@@ -152,7 +152,7 @@ export default function StockReconciliation({ slug, shopId, detectedProducts, on
                                             type="text"
                                             value={product.name}
                                             onChange={(e) => handleUpdateChange(index, 'name', e.target.value)}
-                                            className="w-full bg-transparent font-bold text-slate-900 border-none focus:ring-0 p-0 placeholder-slate-400"
+                                            className="w-full bg-transparent font-bold text-slate-900 border-none focus:ring-0 p-0 placeholder:text-slate-500"
                                             placeholder="Nom du produit"
                                         />
                                     </td>
@@ -161,7 +161,7 @@ export default function StockReconciliation({ slug, shopId, detectedProducts, on
                                             type="number"
                                             value={product.quantity}
                                             onChange={(e) => handleUpdateChange(index, 'quantity', Number(e.target.value))}
-                                            className="w-full bg-slate-100 rounded px-2 py-1 font-mono text-center focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                            className="w-full bg-slate-100 rounded px-2 py-1 font-mono text-center focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 font-bold"
                                         />
                                     </td>
                                     {/* Buying Price Input */}
@@ -171,7 +171,7 @@ export default function StockReconciliation({ slug, shopId, detectedProducts, on
                                                 type="text"
                                                 value={product.buying_price}
                                                 onChange={(e) => handleUpdateChange(index, 'buying_price', e.target.value)}
-                                                className="w-full bg-orange-100/50 rounded px-2 py-1 font-mono text-center focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none pl-1"
+                                                className="w-full bg-orange-100/50 rounded px-2 py-1 font-mono text-center focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none pl-1 text-slate-900 font-bold placeholder:text-slate-400"
                                                 placeholder="0"
                                             />
                                         </div>

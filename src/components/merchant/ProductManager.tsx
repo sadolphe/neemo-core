@@ -107,7 +107,7 @@ export default function ProductManager({ shop, onUpdate }: ProductManagerProps) 
                         <input
                             type="text"
                             placeholder="Nom du produit (ex: Coca)"
-                            className="p-2 border rounded-lg"
+                            className="p-3 border rounded-lg text-slate-900 placeholder:text-slate-500 w-full"
                             value={newProduct.name}
                             onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
                             required
@@ -115,7 +115,7 @@ export default function ProductManager({ shop, onUpdate }: ProductManagerProps) 
                         <input
                             type="text"
                             placeholder="Prix (ex: 10.00)"
-                            className="p-2 border rounded-lg"
+                            className="p-3 border rounded-lg text-slate-900 placeholder:text-slate-500 w-full"
                             value={newProduct.price}
                             onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
                             required

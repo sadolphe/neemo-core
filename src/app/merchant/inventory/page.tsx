@@ -329,7 +329,7 @@ function InventoryContent() {
                                                     >
                                                         -
                                                     </button>
-                                                    <div className="w-16 h-10 flex items-center justify-center font-mono font-bold bg-white border-y border-slate-200 text-lg">
+                                                    <div className="w-16 h-10 flex items-center justify-center font-mono font-bold bg-white border-y border-slate-200 text-lg text-slate-900">
                                                         {product.quantity || 0}
                                                     </div>
                                                     <button

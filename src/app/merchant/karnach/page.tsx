@@ -126,7 +126,7 @@ function KarnachContent() {
                         placeholder="🔍 Chercher un client..."
                         value={filter}
                         onChange={(e) => setFilter(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder:text-slate-500 font-medium"
                     />
                 </div>
 
@@ -140,7 +140,7 @@ function KarnachContent() {
                             <div key={customer.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between group">
                                 <div>
                                     <h3 className="font-bold text-lg text-slate-900">{customer.name}</h3>
-                                    <p className="text-xs text-slate-400">{customer.phone || 'Pas de numéro'}</p>
+                                    <p className="text-xs text-slate-600 font-medium">{customer.phone || 'Pas de numéro'}</p>
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <div className={`text-right ${Number(customer.balance) < 0 ? 'text-red-600' : 'text-green-600'}`}>
@@ -177,13 +177,13 @@ function KarnachContent() {
                             <input
                                 type="text" placeholder="Nom (ex: Khalti Fatima)"
                                 value={newCustomerName} onChange={e => setNewCustomerName(e.target.value)}
-                                className="w-full border border-slate-300 rounded-lg p-3 mb-3"
+                                className="w-full border border-slate-300 rounded-lg p-3 mb-3 text-slate-900 placeholder:text-slate-500 font-medium"
                                 autoFocus
                             />
                             <input
                                 type="tel" placeholder="Téléphone (Optionnel)"
                                 value={newCustomerPhone} onChange={e => setNewCustomerPhone(e.target.value)}
-                                className="w-full border border-slate-300 rounded-lg p-3 mb-6"
+                                className="w-full border border-slate-300 rounded-lg p-3 mb-6 text-slate-900 placeholder:text-slate-500 font-medium"
                             />
                             <div className="flex gap-2">
                                 <button onClick={() => setShowAddModal(false)} className="flex-1 py-3 text-slate-500 font-bold">Annuler</button>
@@ -197,16 +197,16 @@ function KarnachContent() {
                 {transactionType && selectedCustomer && (
                     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                         <div className="bg-white rounded-2xl w-full max-w-sm p-6 animate-in zoom-in-95">
-                            <h2 className="text-xl font-bold mb-1">
+                            <h2 className="text-xl font-bold mb-1 text-slate-900">
                                 {transactionType === 'DEBT' ? '🔴 Ajouter une Dette' : '🟢 Encaisser un Paiement'}
                             </h2>
-                            <p className="text-slate-500 text-sm mb-6">Pour {selectedCustomer.name}</p>
+                            <p className="text-slate-500 text-sm mb-6">Pour <span className="text-slate-900 font-bold">{selectedCustomer.name}</span></p>
 
                             <div className="relative mb-6">
                                 <input
                                     type="number" placeholder="0.00"
                                     value={amount} onChange={e => setAmount(e.target.value)}
-                                    className="w-full border-2 border-slate-200 rounded-2xl p-4 text-center text-3xl font-bold outline-none focus:border-blue-500"
+                                    className="w-full border-2 border-slate-200 rounded-2xl p-4 text-center text-3xl font-bold outline-none focus:border-blue-500 text-slate-900 placeholder:text-slate-300"
                                     autoFocus
                                 />
                                 <span className="absolute right-8 top-6 text-slate-400 font-bold">DH</span>

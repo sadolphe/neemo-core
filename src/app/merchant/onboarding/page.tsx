@@ -65,7 +65,7 @@ export default function OnboardingPage() {
                             type="text"
                             required
                             placeholder="Ex: Épicerie du Soleil"
-                            className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-800"
+                            className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 font-medium placeholder:text-slate-400"
                         />
                     </div>
 
@@ -76,14 +76,14 @@ export default function OnboardingPage() {
                             type="tel"
                             required
                             placeholder="Ex: +212600000000 (International)"
-                            className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-800"
+                            className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 font-medium placeholder:text-slate-400"
                         />
                         <p className="text-xs text-slate-400 mt-1">Format international obligatoire (+33..., +212...).</p>
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Catégorie</label>
-                        <select name="category" className="w-full p-3 border border-slate-200 rounded-xl bg-white outline-none text-slate-800">
+                        <select name="category" className="w-full p-3 border border-slate-200 rounded-xl bg-white outline-none text-slate-900 font-medium">
                             <option value="Alimentation">Alimentation</option>
                             <option value="Restaurant">Restaurant / Snack</option>
                             <option value="Mode">Mode / Vêtements</option>
@@ -98,7 +98,7 @@ export default function OnboardingPage() {
                             name="address"
                             type="text"
                             placeholder="Ex: Maarif, Casablanca"
-                            className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-800"
+                            className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 font-medium placeholder:text-slate-400"
                         />
                     </div>
 

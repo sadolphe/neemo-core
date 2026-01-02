@@ -128,7 +128,7 @@ function PosContent() {
                         placeholder="🔍 Chercher produit..."
                         value={filter}
                         onChange={(e) => setFilter(e.target.value)}
-                        className="bg-white px-4 py-3 rounded-xl border border-slate-200 w-64 outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                        className="bg-white px-4 py-3 rounded-xl border border-slate-200 w-64 outline-none focus:ring-2 focus:ring-blue-500 shadow-sm text-slate-900 placeholder:text-slate-500 font-medium"
                     />
                 </header>
 
@@ -235,7 +235,7 @@ function PosContent() {
                                 id="cust-select"
                                 value={selectedCustomer}
                                 onChange={(e) => setSelectedCustomer(e.target.value)}
-                                className="w-full bg-white border border-slate-300 rounded-lg p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full bg-white border border-slate-300 rounded-lg p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 font-medium"
                             >
                                 <option value="">Choisir un client...</option>
                                 {customers.map(c => (
