@@ -141,7 +141,7 @@ function PosContent() {
                         >
                             <span className="font-bold text-slate-800 line-clamp-2 leading-tight">{p.name}</span>
                             <div className="flex justify-between items-end w-full">
-                                <span className="text-xs text-slate-400 font-medium">Stock: {p.quantity}</span>
+                                <span className="text-xs text-slate-400 font-medium">Stock: {Number(p.quantity) || 0}</span>
                                 <span className="font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">{p.price} dh</span>
                             </div>
                         </button>
@@ -286,7 +286,7 @@ function PosContent() {
                                 <div key={idx} className="flex justify-between items-center py-2 border-b border-yellow-200 last:border-0">
                                     <span className="font-bold text-slate-800">{item.name}</span>
                                     <span className="bg-white px-2 py-1 rounded text-xs font-bold text-red-600 border border-red-200">
-                                        Reste: {item.quantity}
+                                        Reste: {Number(item.quantity) || 0}
                                     </span>
                                 </div>
                             ))}

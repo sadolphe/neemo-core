@@ -76,7 +76,11 @@ export async function processSale(
         const cartItem = items.find(i => i.name.toLowerCase() === p.name.toLowerCase());
         if (cartItem) {
             stockUpdated = true;
-            const newQty = Math.max(0, Number(p.quantity) - cartItem.quantity);
+            // FIXED: Handle potential non-numeric values safely
+            const currentQty = parseFloat(p.quantity);
+            const safeCurrentQty = isNaN(currentQty) ? 0 : currentQty;
+
+            const newQty = Math.max(0, safeCurrentQty - cartItem.quantity);
             return { ...p, quantity: newQty };
         }
         return p;
@@ -91,26 +95,31 @@ export async function processSale(
 
         if (updateError) console.error("Stock update failed", updateError);
         else {
-            // FIRE & FORGET ALERT
-            // We dynamically import to avoid circular dep if any, though here it's clean.
-            // But actually we are in server action, so just call it.
             const { checkAndAlertLowStock } = await import('@/services/alerting');
-            // We only want to alert on items that *changed* and are *low*
-            // But the service logic already filters for low stock. 
-            // Ideally we should pass only the items that were in the cart to avoid false positives on items already low but untouched?
-            // The user said: "if I deplete my stock quickly".
-            // If I have 3 items (low) and I don't sell them, I don't want an alert now.
-            // I only want alert for items I *just sold*.
 
-            // Filter updatedProducts to only those in the cart
-            const potentiallyAlertableItems = updatedProducts.filter(p => items.some(i => i.name.toLowerCase() === p.name.toLowerCase()));
+            // FIXED Logic: Only alert if we CROSSED the threshold descending (Old > 5 AND New <= 5)
+            // This prevents alerts for items that were already low or uninitialized (0/NaN).
+            const lowStockItems = updatedProducts.filter(newP => {
+                const cartItem = items.find(i => i.name.toLowerCase() === newP.name.toLowerCase());
+                if (!cartItem) return false; // Item not touched in this sale
 
-            // Filter items that are actually low stock (<= 5)
-            // We use potentiallyAlertableItems (items in cart) and verify their new quantity
-            const lowStockItems = potentiallyAlertableItems.filter((p: any) => (Number(p.quantity) || 0) <= 5);
+                const oldP = currentProducts.find(cp => cp.name.toLowerCase() === newP.name.toLowerCase());
+                const oldQty = parseFloat(oldP?.quantity);
+                const newQty = Number(newP.quantity);
 
-            // Send WhatsApp Alert
-            checkAndAlertLowStock(shopId, potentiallyAlertableItems).catch(console.error);
+                // Smart Check: 
+                // 1. Must be numeric (not NaN)
+                // 2. Old Quantity MUST have been > 5 (Healthy)
+                // 3. New Quantity MUST be <= 5 (Critical)
+                const wasHealthy = !isNaN(oldQty) && oldQty > 5;
+                const isNowCritical = !isNaN(newQty) && newQty <= 5;
+
+                return wasHealthy && isNowCritical;
+            });
+
+            if (lowStockItems.length > 0) {
+                checkAndAlertLowStock(shopId, lowStockItems).catch(console.error);
+            }
 
             revalidatePath(`/merchant/pos`);
             revalidatePath(`/merchant/dashboard`);
