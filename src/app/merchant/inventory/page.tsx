@@ -154,11 +154,30 @@ function InventoryContent() {
         setErrorMessage(null);
 
         try {
+            // 1. Resize/Compress (Client Side)
             const resizedBlob = await resizeImage(file);
-            const formData = new FormData();
-            formData.append('file', resizedBlob, file.name);
+            const resizedFile = new File([resizedBlob], file.name, { type: 'image/jpeg' });
 
-            const result = await (activeTab === 'shelf' ? analyzeShelf(formData) : analyzeInvoice(formData));
+            // 2. Upload to Supabase Storage (Robust)
+            const fileName = `${slug}/${Date.now()}_${file.name.replace(/\s/g, '_')}`;
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('vision-uploads')
+                .upload(fileName, resizedFile);
+
+            if (uploadError) {
+                console.error("Storage Upload Error:", uploadError);
+                throw new Error("Echec de l'envoi de l'image (Storage). Réessayez.");
+            }
+
+            // 3. Get Public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('vision-uploads')
+                .getPublicUrl(fileName);
+
+            console.log("Image uploaded to:", publicUrl);
+
+            // 4. Send URL to Server Action (No Timeout risk)
+            const result = await (activeTab === 'shelf' ? analyzeShelf(publicUrl) : analyzeInvoice(publicUrl));
             console.log("Server Action returned:", result);
 
             setIsAnalyzing(false);
@@ -167,13 +186,13 @@ function InventoryContent() {
                 setAnalysisResult(result.data);
                 setShowSuccess(true);
             } else {
-                setErrorMessage(result.error || "Erreur inconnue lors de l'analyse.");
+                setErrorMessage(result.error || "L'IA n'a pas pu lire l'image.");
             }
         } catch (err: any) {
             console.error("CATCH BLOCK ERROR:", err);
             setIsAnalyzing(false);
             const msg = err?.message || (typeof err === 'object' ? JSON.stringify(err) : String(err));
-            setErrorMessage(msg || "Erreur technique lors de l'analyse.");
+            setErrorMessage(msg || "Erreur technique. Vérifiez votre connexion.");
         }
     };
 

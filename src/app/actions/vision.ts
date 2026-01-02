@@ -6,21 +6,15 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function analyzeInvoice(formData: FormData) {
-    console.log("Analyzing invoice...");
-    const file = formData.get('file') as File;
+// Updated to accept URL (Robust Mode)
+export async function analyzeInvoice(imageUrl: string) {
+    console.log("Analyzing invoice from URL:", imageUrl);
 
-    if (!file) {
-        return { error: 'No file provided' };
+    if (!imageUrl) {
+        return { error: 'No image URL provided' };
     }
 
     try {
-        // Convert File to Base64
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-        const base64Image = buffer.toString('base64');
-        const mimeType = file.type;
-
         const response = await openai.chat.completions.create({
             model: "gpt-4o",
             messages: [
@@ -51,7 +45,7 @@ export async function analyzeInvoice(formData: FormData) {
                         {
                             type: "image_url",
                             image_url: {
-                                "url": `data:${mimeType};base64,${base64Image}`
+                                "url": imageUrl
                             }
                         }
                     ]
@@ -65,7 +59,6 @@ export async function analyzeInvoice(formData: FormData) {
 
         if (!content) return { error: "Empty response from AI" };
 
-        // Clean cleanup in case of markdown code blocks
         const cleanContent = content.replace(/```json/g, '').replace(/```/g, '').trim();
         const data = JSON.parse(cleanContent);
 
@@ -77,20 +70,15 @@ export async function analyzeInvoice(formData: FormData) {
     }
 }
 
-export async function analyzeShelf(formData: FormData) {
-    console.log("Analyzing shelf...");
-    const file = formData.get('file') as File;
+// Updated to accept URL (Robust Mode)
+export async function analyzeShelf(imageUrl: string) {
+    console.log("Analyzing shelf from URL:", imageUrl);
 
-    if (!file) {
-        return { error: 'No file provided' };
+    if (!imageUrl) {
+        return { error: 'No image URL provided' };
     }
 
     try {
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-        const base64Image = buffer.toString('base64');
-        const mimeType = file.type;
-
         const response = await openai.chat.completions.create({
             model: "gpt-4o",
             messages: [
@@ -121,7 +109,7 @@ export async function analyzeShelf(formData: FormData) {
                         {
                             type: "image_url",
                             image_url: {
-                                "url": `data:${mimeType};base64,${base64Image}`
+                                "url": imageUrl
                             }
                         }
                     ]

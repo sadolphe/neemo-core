@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { updateShopProducts } from '@/app/actions/merchant';
+import { supabase } from '@/lib/supabase';
 
 interface Product {
     name: string;
@@ -55,13 +56,65 @@ export default function StockReconciliation({ slug, shopId, detectedProducts, on
 
     const handleConfirm = async () => {
         setIsSaving(true);
-        const result = await updateShopProducts(shopId, slug, products);
-        setIsSaving(false);
-        if (result.success) {
-            alert("Stock mis à jour avec succès !");
-            onSuccess();
-        } else {
-            alert("Erreur lors de la mise à jour: " + result.error);
+
+        try {
+            // 1. Fetch current latest stock from DB to avoid overwrites
+            const { data: currentShop, error: fetchError } = await supabase
+                .from('shops')
+                .select('products')
+                .eq('id', shopId)
+                .single();
+
+            if (fetchError) throw new Error("Impossible de récupérer le stock actuel.");
+
+            const currentProducts: Product[] = Array.isArray(currentShop?.products) ? currentShop.products : [];
+
+            // 2. Smart Merge Logic
+            // We create a map of existing products for fast lookup
+            const productMap = new Map<string, Product>();
+            currentProducts.forEach(p => productMap.set(p.name.toLowerCase().trim(), p));
+
+            // We process the new validated products
+            products.forEach(newP => {
+                const key = newP.name.toLowerCase().trim();
+                const existing = productMap.get(key);
+
+                if (existing) {
+                    // MERGE: Update quantity and prices
+                    // Logic: Quantity ADDS up (Scan finding) or Replaces? 
+                    // For "Invoice Scan" (Receipt), it usually means NEW stock arriving -> ADD.
+                    // For "Shelf Scan" (Audit), it usually means CURRENT stock visible -> REPLACE or ADJUST?
+                    // Let's assume ADDITION for Safety for now, or maybe we should simply use the new detected quantity if it's an audit.
+                    // Given the ambiguity, we'll ADD quantities for now as it's safer for "Restock" scenarios.
+
+                    productMap.set(key, {
+                        ...existing,
+                        quantity: Number(existing.quantity || 0) + Number(newP.quantity || 0),
+                        buying_price: newP.buying_price !== "0" ? newP.buying_price : existing.buying_price,
+                        price: newP.price !== "0" ? newP.price : existing.price
+                    });
+                } else {
+                    // NEW: Add to map
+                    productMap.set(key, newP);
+                }
+            });
+
+            // Convert back to array
+            const mergedProducts = Array.from(productMap.values());
+
+            // 3. Save
+            const result = await updateShopProducts(shopId, slug, mergedProducts);
+
+            setIsSaving(false);
+            if (result.success) {
+                alert("Stock mis à jour avec succès ! (Fusionné)");
+                onSuccess();
+            } else {
+                alert("Erreur lors de la mise à jour: " + result.error);
+            }
+        } catch (err: any) {
+            setIsSaving(false);
+            alert("Erreur technique: " + err.message);
         }
     };
 
@@ -138,8 +191,8 @@ export default function StockReconciliation({ slug, shopId, detectedProducts, on
                                     {/* Margin Release */}
                                     <td className="p-4 px-1 text-center">
                                         <div className={`text-xs font-bold px-2 py-1 rounded-full border ${margin.alert === 'critical' ? 'bg-red-100 text-red-700 border-red-200' :
-                                                margin.alert === 'warning' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
-                                                    'bg-green-100 text-green-700 border-green-200'
+                                            margin.alert === 'warning' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
+                                                'bg-green-100 text-green-700 border-green-200'
                                             }`}>
                                             {margin.percent}%
                                         </div>
